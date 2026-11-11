@@ -178,3 +178,4 @@ export function triggerPrint() {
     window.print();
   }, 300);
 }
+

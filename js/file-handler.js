@@ -149,3 +149,4 @@ export function loadImageFromFile(file) {
     reader.readAsDataURL(file);
   });
 }
+

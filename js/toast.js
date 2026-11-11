@@ -29,3 +29,4 @@ export function showToast(message, isError = false) {
     toast.classList.add('translate-y-20', 'opacity-0');
   }, 3500);
 }
+

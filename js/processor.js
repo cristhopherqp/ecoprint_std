@@ -99,3 +99,4 @@ export function renderProcessedImageToCanvas(item, targetCanvas, maxResolution =
     ctx.putImageData(imgData, 0, 0);
   }
 }
+

@@ -19,7 +19,6 @@ import {
 } from './layout.js';
 import { setupDropZone, setupPasteSupport } from './file-handler.js';
 import {
-  openCropModal,
   closeCropModal,
   resetCurrentCrop,
   confirmCrop,
@@ -55,11 +54,9 @@ export function updateUI() {
 
 /**
  * Alterna entre la vista de edición individual y la vista de hojas maquetadas
- * @param {'gallery'|'sheets'} view 
+ * @param {'gallery'|'sheets'} view - Vista destino
  */
 export function switchView(view) {
-  setCurrentView(view);
-
   const galleryBtn = document.getElementById('viewGalleryBtn');
   const sheetsBtn = document.getElementById('viewSheetsBtn');
   const gallerySection = document.getElementById('galleryView');
@@ -67,24 +64,38 @@ export function switchView(view) {
   const uploadContainer = document.getElementById('uploadContainer');
 
   if (view === 'gallery') {
-    if (galleryBtn) galleryBtn.className = "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-emerald-600 text-white shadow";
-    if (sheetsBtn) sheetsBtn.className = "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-white";
+    if (galleryBtn) {
+      galleryBtn.className = 'px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-emerald-600 text-white shadow';
+      galleryBtn.setAttribute('aria-selected', 'true');
+    }
+    if (sheetsBtn) {
+      sheetsBtn.className = 'px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-white';
+      sheetsBtn.setAttribute('aria-selected', 'false');
+    }
     if (gallerySection) gallerySection.classList.remove('hidden');
     if (sheetsSection) sheetsSection.classList.add('hidden');
     if (uploadContainer) uploadContainer.classList.remove('hidden');
-    renderGalleryCards();
   } else {
-    if (sheetsBtn) sheetsBtn.className = "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-emerald-600 text-white shadow";
-    if (galleryBtn) galleryBtn.className = "px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-white";
+    if (sheetsBtn) {
+      sheetsBtn.className = 'px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-emerald-600 text-white shadow';
+      sheetsBtn.setAttribute('aria-selected', 'true');
+    }
+    if (galleryBtn) {
+      galleryBtn.className = 'px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-white';
+      galleryBtn.setAttribute('aria-selected', 'false');
+    }
     if (sheetsSection) sheetsSection.classList.remove('hidden');
     if (gallerySection) gallerySection.classList.add('hidden');
     if (uploadContainer) uploadContainer.classList.add('hidden');
-    renderPrintSheets();
   }
+
+  // setCurrentView dispara notifyStateChange -> updateUI
+  setCurrentView(view);
 }
 
 /**
- * Elimina todas las imágenes cargadas previa confirmación/acción
+ * Elimina todas las imágenes cargadas
+ * @param {Event} [e] - Evento de clic opcional
  */
 export function clearAllImages(e) {
   if (e && typeof e.stopPropagation === 'function') {
@@ -96,7 +107,7 @@ export function clearAllImages(e) {
 
 /**
  * Actualiza la etiqueta visual del brillo global
- * @param {number|string} val 
+ * @param {number|string} val - Valor de brillo (0..90)
  */
 export function updateGlobalBrightnessLabel(val) {
   const lbl = document.getElementById('globalBrightnessVal');
@@ -105,7 +116,7 @@ export function updateGlobalBrightnessLabel(val) {
 
 /**
  * Actualiza la etiqueta visual del contraste global
- * @param {number|string} val 
+ * @param {number|string} val - Valor de contraste (-20..60)
  */
 export function updateGlobalContrastLabel(val) {
   const lbl = document.getElementById('globalContrastVal');
@@ -143,7 +154,7 @@ export function onLayoutChange() {
 }
 
 /**
- * Inicialización de todos los módulos y listeners DOM
+ * Inicialización de todos los módulos y listeners DOM sin atributos inline
  */
 function initApp() {
   setupDropZone();
@@ -156,56 +167,55 @@ function initApp() {
     updateUI();
   });
 
-  // Vincular eventos de la barra de controles globales
-  const globalBrightness = document.getElementById('globalBrightness');
-  if (globalBrightness) {
-    globalBrightness.addEventListener('input', (e) => updateGlobalBrightnessLabel(e.target.value));
-  }
+  // Navegación de vistas y botones de impresión
+  document.getElementById('viewGalleryBtn')?.addEventListener('click', () => switchView('gallery'));
+  document.getElementById('viewSheetsBtn')?.addEventListener('click', () => switchView('sheets'));
+  document.getElementById('backToGalleryBtn')?.addEventListener('click', () => switchView('gallery'));
+  document.getElementById('mainPrintBtn')?.addEventListener('click', triggerPrint);
+  document.getElementById('secondaryPrintBtn')?.addEventListener('click', triggerPrint);
 
-  const globalContrast = document.getElementById('globalContrast');
-  if (globalContrast) {
-    globalContrast.addEventListener('input', (e) => updateGlobalContrastLabel(e.target.value));
-  }
+  // Botones de zona de carga
+  document.getElementById('loadSampleBtn')?.addEventListener('click', loadSampleImages);
+  document.getElementById('clearAllBtn')?.addEventListener('click', clearAllImages);
 
-  const applyGlobalBtn = document.getElementById('applyGlobalBtn');
-  if (applyGlobalBtn) {
-    applyGlobalBtn.addEventListener('click', applyGlobalAdjustmentsToAll);
-  }
-
-  // Vincular selectores de maquetación
-  const layoutSelect = document.getElementById('layoutSelect');
-  const paperSizeSelect = document.getElementById('paperSizeSelect');
-  const orientationSelect = document.getElementById('orientationSelect');
-  const marginSelect = document.getElementById('marginSelect');
-  const fitSelect = document.getElementById('fitSelect');
-  const cutGuidesCheck = document.getElementById('cutGuidesCheck');
-
-  [layoutSelect, paperSizeSelect, orientationSelect, marginSelect, fitSelect, cutGuidesCheck].forEach(elem => {
-    if (elem) {
-      elem.addEventListener('change', onLayoutChange);
-    }
+  // Controles globales
+  document.getElementById('globalBrightness')?.addEventListener('input', (e) => {
+    updateGlobalBrightnessLabel(e.target.value);
   });
+  document.getElementById('globalContrast')?.addEventListener('input', (e) => {
+    updateGlobalContrastLabel(e.target.value);
+  });
+  document.getElementById('applyGlobalBtn')?.addEventListener('click', applyGlobalAdjustmentsToAll);
+
+  // Selectores de maquetación
+  const layoutControlIds = [
+    'layoutSelect',
+    'paperSizeSelect',
+    'orientationSelect',
+    'marginSelect',
+    'fitSelect',
+    'cutGuidesCheck'
+  ];
+  layoutControlIds.forEach(id => {
+    document.getElementById(id)?.addEventListener('change', onLayoutChange);
+  });
+
+  // Controles del modal de recorte
+  document.querySelectorAll('.crop-aspect-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const aspect = btn.getAttribute('data-aspect') || 'free';
+      setCropAspect(aspect);
+    });
+  });
+  document.getElementById('resetCropBtn')?.addEventListener('click', resetCurrentCrop);
+  document.getElementById('cancelCropBtn')?.addEventListener('click', closeCropModal);
+  document.getElementById('confirmCropBtn')?.addEventListener('click', confirmCrop);
 
   // Render inicial de UI
   updateUI();
 }
 
-// Compatibilidad con eventos inline HTML y consola del desarrollador
-window.switchView = switchView;
-window.triggerPrint = triggerPrint;
-window.clearAllImages = clearAllImages;
-window.loadSampleImages = loadSampleImages;
-window.applyGlobalAdjustmentsToAll = applyGlobalAdjustmentsToAll;
-window.updateGlobalBrightnessLabel = updateGlobalBrightnessLabel;
-window.updateGlobalContrastLabel = updateGlobalContrastLabel;
-window.onLayoutChange = onLayoutChange;
-window.openCropModal = openCropModal;
-window.closeCropModal = closeCropModal;
-window.resetCurrentCrop = resetCurrentCrop;
-window.confirmCrop = confirmCrop;
-window.setCropAspect = setCropAspect;
-
-// Iniciar aplicación
+// Iniciar aplicación al estar listo el DOM
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp);
 } else {

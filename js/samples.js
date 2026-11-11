@@ -113,3 +113,4 @@ export function loadSampleImages(e) {
     showToast('4 documentos de prueba cargados.');
   });
 }
+

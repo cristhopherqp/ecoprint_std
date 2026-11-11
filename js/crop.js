@@ -13,7 +13,7 @@ let eventsInitialized = false;
 
 /**
  * Abre el modal de recorte para la imagen seleccionada
- * @param {number} index 
+ * @param {number} index - Índice de la imagen a recortar
  */
 export function openCropModal(index) {
   const images = getImages();
@@ -36,7 +36,7 @@ export function openCropModal(index) {
 }
 
 /**
- * Cierra el modal de recorte
+ * Cierra el modal de recorte y limpia el estado de edición
  */
 export function closeCropModal() {
   const modal = document.getElementById('cropModal');
@@ -47,7 +47,7 @@ export function closeCropModal() {
 }
 
 /**
- * Restablece el recorte al 100% de la imagen
+ * Restablece el recorte al 100% de la imagen original
  */
 export function resetCurrentCrop() {
   cropBox = { x: 0, y: 0, w: 1, h: 1 };
@@ -55,7 +55,7 @@ export function resetCurrentCrop() {
 }
 
 /**
- * Confirma el recorte y lo guarda en el estado
+ * Confirma el recorte activo y lo guarda en el estado de la imagen
  */
 export function confirmCrop() {
   const editingIndex = getEditingItemIndex();
@@ -68,7 +68,7 @@ export function confirmCrop() {
 
 /**
  * Cambia la relación de aspecto del recorte ('free', '1:1', '4:3', 'a4')
- * @param {string} aspect 
+ * @param {'free'|'1:1'|'4:3'|'a4'} aspect - Modo de proporción
  */
 export function setCropAspect(aspect) {
   cropAspectMode = aspect;
@@ -91,6 +91,12 @@ export function setCropAspect(aspect) {
   drawCropCanvas();
 }
 
+/**
+ * Ajusta las dimensiones normalizadas del recuadro para cumplir una relación de aspecto
+ * @param {number} targetRatio - Relación ancho/alto objetivo
+ * @param {number} imgW - Ancho natural de la imagen
+ * @param {number} imgH - Alto natural de la imagen
+ */
 function applyTargetAspect(targetRatio, imgW, imgH) {
   let w = cropBox.w;
   let h = (w * imgW) / (targetRatio * imgH);
@@ -105,16 +111,24 @@ function applyTargetAspect(targetRatio, imgW, imgH) {
   if (cropBox.y + cropBox.h > 1.0) cropBox.y = 1.0 - cropBox.h;
 }
 
+/**
+ * Sincroniza el estado visual de los botones de relación de aspecto
+ */
 export function updateAspectButtonsUI() {
   document.querySelectorAll('.crop-aspect-btn').forEach(btn => {
-    if (btn.getAttribute('data-aspect') === cropAspectMode) {
-      btn.className = "crop-aspect-btn px-2.5 py-1 rounded bg-emerald-600 text-white font-medium text-xs";
+    const isActive = btn.getAttribute('data-aspect') === cropAspectMode;
+    btn.setAttribute('aria-pressed', String(isActive));
+    if (isActive) {
+      btn.className = 'crop-aspect-btn px-2.5 py-1 rounded bg-emerald-600 text-white font-medium text-xs';
     } else {
-      btn.className = "crop-aspect-btn px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:text-white text-xs";
+      btn.className = 'crop-aspect-btn px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:text-white text-xs';
     }
   });
 }
 
+/**
+ * Inicializa las dimensiones del canvas de recorte según el espacio disponible en el modal
+ */
 export function initCropCanvas() {
   const editingIndex = getEditingItemIndex();
   if (editingIndex === null) return;
@@ -133,12 +147,15 @@ export function initCropCanvas() {
   const imgH = item.naturalHeight;
 
   const ratio = Math.min(availW / imgW, availH / imgH, 1.0);
-  canvas.width = Math.round(imgW * ratio);
-  canvas.height = Math.round(imgH * ratio);
+  canvas.width = Math.max(1, Math.round(imgW * ratio));
+  canvas.height = Math.max(1, Math.round(imgH * ratio));
 
   drawCropCanvas();
 }
 
+/**
+ * Dibuja la imagen base, máscara semitransparente, guías de tercios y manijas en el canvas
+ */
 export function drawCropCanvas() {
   const editingIndex = getEditingItemIndex();
   if (editingIndex === null) return;
@@ -156,7 +173,7 @@ export function drawCropCanvas() {
   ctx.drawImage(item.imgElement, 0, 0, W, H);
 
   // 2. Máscara oscura semitransparente
-  ctx.fillStyle = "rgba(10, 15, 29, 0.65)";
+  ctx.fillStyle = 'rgba(10, 15, 29, 0.65)';
   ctx.fillRect(0, 0, W, H);
 
   // Coordenadas absolutas en canvas
@@ -174,12 +191,12 @@ export function drawCropCanvas() {
   ctx.restore();
 
   // 4. Borde del marco de recorte
-  ctx.strokeStyle = "#10b981"; // Emerald
+  ctx.strokeStyle = '#10b981'; // Emerald
   ctx.lineWidth = 2;
   ctx.strokeRect(bx, by, bw, bh);
 
   // 5. Guías de tercios compositivas
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(bx + bw / 3, by);
@@ -194,8 +211,8 @@ export function drawCropCanvas() {
 
   // 6. Manijas de control (Handles)
   const handleSize = 9;
-  ctx.fillStyle = "#ffffff";
-  ctx.strokeStyle = "#047857";
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#047857';
   ctx.lineWidth = 2;
 
   const handles = getCropHandlesPixels(bx, by, bw, bh);
@@ -208,6 +225,14 @@ export function drawCropCanvas() {
   }
 }
 
+/**
+ * Calcula las coordenadas en píxeles de las 8 manijas de redimensionado
+ * @param {number} bx - Posición X
+ * @param {number} by - Posición Y
+ * @param {number} bw - Ancho
+ * @param {number} bh - Alto
+ * @returns {Record<string, {x: number, y: number}>}
+ */
 function getCropHandlesPixels(bx, by, bw, bh) {
   return {
     nw: { x: bx, y: by },
@@ -222,7 +247,7 @@ function getCropHandlesPixels(bx, by, bw, bh) {
 }
 
 /**
- * Inicializa los eventos de arrastre en el canvas de recorte
+ * Inicializa los eventos de ratón, pantalla táctil y teclado para el recorte interactivo
  */
 export function setupCropCanvasEvents() {
   if (eventsInitialized) return;
@@ -280,6 +305,7 @@ export function setupCropCanvasEvents() {
   };
 
   const onMove = (e) => {
+    if (getEditingItemIndex() === null) return;
     const pos = getPos(e);
 
     if (!cropDragHandle) {
@@ -345,6 +371,13 @@ export function setupCropCanvasEvents() {
   canvas.addEventListener('touchstart', onStart, { passive: false });
   window.addEventListener('touchmove', onMove, { passive: false });
   window.addEventListener('touchend', onEnd);
+
+  // Soporte de accesibilidad con tecla Escape para cerrar el modal
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && getEditingItemIndex() !== null) {
+      closeCropModal();
+    }
+  });
 
   eventsInitialized = true;
 }

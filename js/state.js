@@ -12,7 +12,7 @@ const listeners = new Set();
 
 /**
  * Suscribe una función para recibir actualizaciones cuando cambie el estado
- * @param {Function} fn 
+ * @param {Function} fn - Callback ejecutado en cada cambio de estado
  * @returns {Function} Función para cancelar la suscripción
  */
 export function subscribeState(fn) {
@@ -21,7 +21,7 @@ export function subscribeState(fn) {
 }
 
 /**
- * Notifica a los suscriptores de cambios en el estado
+ * Notifica a todos los suscriptores registrados sobre cambios en el estado
  */
 export function notifyStateChange() {
   for (const fn of listeners) {
@@ -35,14 +35,15 @@ export function notifyStateChange() {
 
 /**
  * Obtiene la lista actual de imágenes
+ * @returns {Array<Object>} Copia de referencia del arreglo de imágenes
  */
 export function getImages() {
   return state.images;
 }
 
 /**
- * Agrega una o varias imágenes al estado
- * @param {Array|Object} items 
+ * Agrega una o varias imágenes al estado central
+ * @param {Array<Object>|Object} items - Imagen o arreglo de imágenes a insertar
  */
 export function addImages(items) {
   const newItems = Array.isArray(items) ? items : [items];
@@ -52,7 +53,7 @@ export function addImages(items) {
 
 /**
  * Elimina una imagen por su índice
- * @param {number} index 
+ * @param {number} index - Índice de la imagen a eliminar
  */
 export function removeImage(index) {
   if (index >= 0 && index < state.images.length) {
@@ -62,7 +63,7 @@ export function removeImage(index) {
 }
 
 /**
- * Elimina todas las imágenes
+ * Elimina todas las imágenes cargadas en el estado
  */
 export function clearAllImagesState() {
   state.images = [];
@@ -71,8 +72,8 @@ export function clearAllImagesState() {
 
 /**
  * Reordena una imagen moviéndola en la dirección indicada (-1 o +1)
- * @param {number} index 
- * @param {number} direction 
+ * @param {number} index - Índice actual de la imagen
+ * @param {number} direction - Desplazamiento (-1 hacia atrás, +1 hacia adelante)
  */
 export function moveImageOrderState(index, direction) {
   const newIndex = index + direction;
@@ -85,19 +86,22 @@ export function moveImageOrderState(index, direction) {
 
 /**
  * Actualiza propiedades de una imagen específica
- * @param {number} index 
- * @param {Object} props 
+ * @param {number} index - Índice de la imagen a modificar
+ * @param {Object} props - Propiedades a actualizar
+ * @param {boolean} [notify=true] - Si debe reconstruir la vista global
  */
-export function updateImageProps(index, props) {
+export function updateImageProps(index, props, notify = true) {
   if (state.images[index]) {
     Object.assign(state.images[index], props);
-    notifyStateChange();
+    if (notify) {
+      notifyStateChange();
+    }
   }
 }
 
 /**
  * Aplica ajustes globales (brillo, contraste, eco-tinta) a todas las imágenes
- * @param {Object} adjustments 
+ * @param {{ brightness?: number, contrast?: number, inkSaver?: boolean }} adjustments
  */
 export function applyGlobalAdjustmentsState({ brightness, contrast, inkSaver }) {
   state.images.forEach(img => {
@@ -109,8 +113,8 @@ export function applyGlobalAdjustmentsState({ brightness, contrast, inkSaver }) 
 }
 
 /**
- * Cambia la vista actual ('gallery' | 'sheets')
- * @param {string} view 
+ * Cambia la vista activa ('gallery' | 'sheets')
+ * @param {'gallery'|'sheets'} view
  */
 export function setCurrentView(view) {
   state.currentView = view;
@@ -118,15 +122,16 @@ export function setCurrentView(view) {
 }
 
 /**
- * Establece el índice de la imagen en edición (recorte)
- * @param {number|null} idx 
+ * Establece el índice de la imagen actualmente en edición de recorte
+ * @param {number|null} idx
  */
 export function setEditingItemIndex(idx) {
   state.editingItemIndex = idx;
 }
 
 /**
- * Obtiene el índice de la imagen en edición
+ * Obtiene el índice de la imagen actualmente en edición de recorte
+ * @returns {number|null}
  */
 export function getEditingItemIndex() {
   return state.editingItemIndex;
