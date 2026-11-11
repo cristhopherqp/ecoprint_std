@@ -1,0 +1,20 @@
+{
+  "name": "ecoprint-studio",
+  "version": "1.0.0",
+  "description": "Herramienta web para ahorro de tinta, maquetación y recorte de imágenes para impresión y PDF",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "print",
+    "ink-saver",
+    "crop",
+    "layout",
+    "pdf"
+  ],
+  "author": "",
+  "license": "MIT"
+}
