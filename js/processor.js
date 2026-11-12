@@ -3,7 +3,7 @@
  */
 
 /**
- * Renderiza una imagen aplicando recorte, rotación, aclarado, contraste y ahorro de tinta
+ * Renderiza una imagen aplicando recorte, rotación, aclarado, contraste y blanqueado de fondo (Eco-Tinta)
  * @param {Object} item - Objeto de datos de la imagen
  * @param {HTMLCanvasElement} targetCanvas - Canvas destino donde se dibujará
  * @param {number} [maxResolution=1400] - Resolución máxima para rendimiento óptimo
@@ -47,47 +47,65 @@ export function renderProcessedImageToCanvas(item, targetCanvas, maxResolution =
   ctx.drawImage(img, cx, cy, cw, ch, -drawW / 2, -drawH / 2, drawW, drawH);
   ctx.restore();
 
-  // Aplicar filtros a nivel de pixel si se modificaron los valores
+  // Aplicar filtros a nivel de pixel si hay ajustes activos
   if (item.brightness !== 0 || item.contrast !== 0 || item.inkSaver) {
     const imgData = ctx.getImageData(0, 0, targetCanvas.width, targetCanvas.height);
     const data = imgData.data;
 
-    // Desplazamiento por brillo (aclarado)
-    const bOffset = (item.brightness / 100) * 255;
+    // Aclarado proporcional en medios tonos y sombras sin quemar grises por sí solo
+    const bRatio = item.brightness / 100; // 0.0 a 0.9
 
-    // Factor de curva de contraste (-255 a +255)
-    const cVal = item.contrast * 2.55;
+    // Factor de curva de contraste
+    const cVal = item.contrast * 1.8;
     const cFactor = (259 * (cVal + 255)) / (255 * (259 - cVal));
 
-    // Umbral de luminancia para filtro Eco-Tinta (ahorro de toner/tinta)
-    const inkThreshold = item.inkSaver ? (item.inkThreshold ?? 215) : 9999;
+    // Umbral de luminancia para blanqueado de fondo (Eco-Tinta)
+    const hardWhiteThreshold = item.inkThreshold ? Math.min(item.inkThreshold, 195) : 190;
+    const softStartThreshold = hardWhiteThreshold - 45; // Zona de transición suave (145..190)
 
     for (let i = 0; i < data.length; i += 4) {
       let r = data[i];
       let g = data[i + 1];
       let b = data[i + 2];
 
-      // 1. Contraste
+      // 1. Filtro Blanquear Fondo (Eco-Tinta):
+      // Evalúa la luminancia y saturación del fondo antes de que otros ajustes distorsionen el umbral
+      if (item.inkSaver) {
+        const lumOrig = 0.299 * r + 0.587 * g + 0.114 * b;
+        const maxCh = r > g ? (r > b ? r : b) : (g > b ? g : b);
+        const minCh = r < g ? (r < b ? r : b) : (g < b ? g : b);
+        const chroma = maxCh - minCh;
+
+        // Los fondos grises/papel escaneado tienen baja saturación (chroma < 45) y luminancia media-alta
+        const effectiveLum = chroma < 45 ? lumOrig + 15 : lumOrig;
+
+        if (effectiveLum >= hardWhiteThreshold) {
+          data[i] = 255;
+          data[i + 1] = 255;
+          data[i + 2] = 255;
+          continue;
+        } else if (effectiveLum > softStartThreshold) {
+          // Interpolación suave hacia blanco puro para eliminar sombras de escaneo sin bordes dentados
+          const t = (effectiveLum - softStartThreshold) / (hardWhiteThreshold - softStartThreshold);
+          const smoothT = t * t * (3 - 2 * t); // smoothstep
+          r = r + (255 - r) * smoothT;
+          g = g + (255 - g) * smoothT;
+          b = b + (255 - b) * smoothT;
+        }
+      }
+
+      // 2. Contraste
       if (item.contrast !== 0) {
         r = cFactor * (r - 128) + 128;
         g = cFactor * (g - 128) + 128;
         b = cFactor * (b - 128) + 128;
       }
 
-      // 2. Aclarado (Brillo positivo)
-      if (item.brightness !== 0) {
-        r += bOffset;
-        g += bOffset;
-        b += bOffset;
-      }
-
-      // 3. Filtro Ahorro de Tinta:
-      // Convierte grises claros y sombras de fondo escaneadas en blanco puro
-      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-      if (item.inkSaver && lum >= inkThreshold) {
-        r = 255;
-        g = 255;
-        b = 255;
+      // 3. Aclarar (Brillo adaptativo que levanta sombras y tonos oscuros preservando el rango superior)
+      if (bRatio > 0) {
+        r = r + (245 - r) * (bRatio * 0.65);
+        g = g + (245 - g) * (bRatio * 0.65);
+        b = b + (245 - b) * (bRatio * 0.65);
       }
 
       // Delimitar al rango estándar 0..255
@@ -99,4 +117,3 @@ export function renderProcessedImageToCanvas(item, targetCanvas, maxResolution =
     ctx.putImageData(imgData, 0, 0);
   }
 }
-

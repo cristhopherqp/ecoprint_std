@@ -5,11 +5,13 @@
 import {
   state,
   subscribeState,
+  hydrateState,
   getImages,
   clearAllImagesState,
   applyGlobalAdjustmentsState,
   setCurrentView
 } from './state.js';
+import { restoreSessionFromDB, scheduleSaveSession } from './storage.js';
 import { renderGalleryCards } from './gallery.js';
 import {
   renderPrintSheets,
@@ -36,12 +38,18 @@ export function updateUI() {
   const count = images.length;
 
   const countBadge = document.getElementById('imgCountBadge');
-  const clearBtn = document.getElementById('clearAllBtn');
+  const dropZone = document.getElementById('dropZone');
+  const compactToolbar = document.getElementById('compactUploadToolbar');
   const emptyMsg = document.getElementById('emptyGalleryMessage');
+  const galleryContentLayout = document.getElementById('galleryContentLayout');
 
   if (countBadge) countBadge.textContent = count;
-  if (clearBtn) clearBtn.classList.toggle('hidden', count === 0);
+
+  // Transición del estado de la zona de subida (Dropzone central vs Barra superior + Panel lateral derecho)
+  if (dropZone) dropZone.classList.toggle('hidden', count > 0);
+  if (compactToolbar) compactToolbar.classList.toggle('hidden', count === 0);
   if (emptyMsg) emptyMsg.classList.toggle('hidden', count > 0);
+  if (galleryContentLayout) galleryContentLayout.classList.toggle('hidden', count === 0);
 
   if (state.currentView === 'gallery') {
     renderGalleryCards();
@@ -89,7 +97,7 @@ export function switchView(view) {
     if (uploadContainer) uploadContainer.classList.add('hidden');
   }
 
-  // setCurrentView dispara notifyStateChange -> updateUI
+  // setCurrentView dispara notifyStateChange -> updateUI y persistencia
   setCurrentView(view);
 }
 
@@ -151,16 +159,55 @@ export function onLayoutChange() {
   if (state.currentView === 'sheets') {
     renderPrintSheets();
   }
+  scheduleSaveSession(state);
 }
 
 /**
- * Inicialización de todos los módulos y listeners DOM sin atributos inline
+ * Restaura los valores de los controles del DOM desde una sesión guardada
+ * @param {Object} controls
  */
-function initApp() {
+function restoreControlsToDOM(controls) {
+  if (!controls) return;
+  const setSelectVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) el.value = val;
+  };
+  setSelectVal('layoutSelect', controls.layout);
+  setSelectVal('paperSizeSelect', controls.paperSize);
+  setSelectVal('orientationSelect', controls.orientation);
+  setSelectVal('marginSelect', controls.margin);
+  setSelectVal('fitSelect', controls.fit);
+
+  const cutGuidesCheck = document.getElementById('cutGuidesCheck');
+  if (cutGuidesCheck && controls.cutGuides !== undefined) {
+    cutGuidesCheck.checked = Boolean(controls.cutGuides);
+  }
+
+  const globalBrightness = document.getElementById('globalBrightness');
+  if (globalBrightness && controls.globalBrightness !== undefined) {
+    globalBrightness.value = controls.globalBrightness;
+    updateGlobalBrightnessLabel(controls.globalBrightness);
+  }
+
+  const globalContrast = document.getElementById('globalContrast');
+  if (globalContrast && controls.globalContrast !== undefined) {
+    globalContrast.value = controls.globalContrast;
+    updateGlobalContrastLabel(controls.globalContrast);
+  }
+
+  const globalInkSaver = document.getElementById('globalInkSaver');
+  if (globalInkSaver && controls.globalInkSaver !== undefined) {
+    globalInkSaver.checked = Boolean(controls.globalInkSaver);
+  }
+}
+
+/**
+ * Inicialización de todos los módulos, restauración de sesión desde IndexedDB y listeners DOM
+ */
+async function initApp() {
   setupDropZone();
   setupPasteSupport();
   setupCropCanvasEvents();
-  updatePrintStyles();
 
   // Suscribirse a cambios en el estado para reactividad automática
   subscribeState(() => {
@@ -176,14 +223,26 @@ function initApp() {
 
   // Botones de zona de carga
   document.getElementById('loadSampleBtn')?.addEventListener('click', loadSampleImages);
+  document.getElementById('loadSampleCompactBtn')?.addEventListener('click', loadSampleImages);
   document.getElementById('clearAllBtn')?.addEventListener('click', clearAllImages);
 
   // Controles globales
   document.getElementById('globalBrightness')?.addEventListener('input', (e) => {
     updateGlobalBrightnessLabel(e.target.value);
+    scheduleSaveSession(state);
   });
   document.getElementById('globalContrast')?.addEventListener('input', (e) => {
     updateGlobalContrastLabel(e.target.value);
+    scheduleSaveSession(state);
+  });
+  document.getElementById('globalInkSaver')?.addEventListener('change', (e) => {
+    const enabled = e.target.checked;
+    if (getImages().length > 0) {
+      applyGlobalAdjustmentsState({ inkSaver: enabled });
+      showToast(enabled ? 'Blanqueado de fondo (Eco-Tinta) activado.' : 'Blanqueado de fondo desactivado.');
+    } else {
+      scheduleSaveSession(state);
+    }
   });
   document.getElementById('applyGlobalBtn')?.addEventListener('click', applyGlobalAdjustmentsToAll);
 
@@ -211,8 +270,22 @@ function initApp() {
   document.getElementById('cancelCropBtn')?.addEventListener('click', closeCropModal);
   document.getElementById('confirmCropBtn')?.addEventListener('click', confirmCrop);
 
-  // Render inicial de UI
-  updateUI();
+  // Restaurar sesión persistida desde IndexedDB si existe
+  const restored = await restoreSessionFromDB();
+  if (restored) {
+    restoreControlsToDOM(restored.controls);
+    updatePrintStyles();
+    hydrateState({ images: restored.images, currentView: restored.currentView });
+    if (restored.currentView === 'sheets') {
+      switchView('sheets');
+    }
+    if (restored.images.length > 0) {
+      showToast(`Sesión restaurada (${restored.images.length} imagen(es)).`);
+    }
+  } else {
+    updatePrintStyles();
+    updateUI();
+  }
 }
 
 // Iniciar aplicación al estar listo el DOM

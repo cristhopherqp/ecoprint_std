@@ -2,6 +2,8 @@
  * EcoPrint Studio - Gestión del Estado Central
  */
 
+import { scheduleSaveSession } from './storage.js';
+
 export const state = {
   images: [],
   currentView: 'gallery', // 'gallery' | 'sheets'
@@ -21,9 +23,10 @@ export function subscribeState(fn) {
 }
 
 /**
- * Notifica a todos los suscriptores registrados sobre cambios en el estado
+ * Notifica a todos los suscriptores registrados sobre cambios en el estado y agenda persistencia
+ * @param {boolean} [persist=true] - Si debe persistir la sesión en IndexedDB
  */
-export function notifyStateChange() {
+export function notifyStateChange(persist = true) {
   for (const fn of listeners) {
     try {
       fn(state);
@@ -31,6 +34,24 @@ export function notifyStateChange() {
       console.error('Error en suscriptor de estado:', err);
     }
   }
+  if (persist) {
+    scheduleSaveSession(state);
+  }
+}
+
+/**
+ * Hidrata el estado inicial desde el almacenamiento persistente (IndexedDB)
+ * @param {{ images?: Array<Object>, currentView?: 'gallery'|'sheets' }} saved
+ */
+export function hydrateState(saved) {
+  if (!saved) return;
+  if (Array.isArray(saved.images)) {
+    state.images = saved.images;
+  }
+  if (saved.currentView === 'gallery' || saved.currentView === 'sheets') {
+    state.currentView = saved.currentView;
+  }
+  notifyStateChange(false);
 }
 
 /**
@@ -95,6 +116,8 @@ export function updateImageProps(index, props, notify = true) {
     Object.assign(state.images[index], props);
     if (notify) {
       notifyStateChange();
+    } else {
+      scheduleSaveSession(state);
     }
   }
 }

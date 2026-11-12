@@ -6,25 +6,33 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Simulación visual de hojas de papel físicas en pantalla */
+/* Simulación visual exacta 1:1 de hojas de papel físicas en pantalla */
 .sheet-a4-portrait {
   width: 210mm;
-  min-height: 297mm;
+  height: 297mm;
+  aspect-ratio: 210 / 297;
+  box-sizing: border-box;
 }
 
 .sheet-a4-landscape {
   width: 297mm;
-  min-height: 210mm;
+  height: 210mm;
+  aspect-ratio: 297 / 210;
+  box-sizing: border-box;
 }
 
 .sheet-letter-portrait {
   width: 215.9mm;
-  min-height: 279.4mm;
+  height: 279.4mm;
+  aspect-ratio: 215.9 / 279.4;
+  box-sizing: border-box;
 }
 
 .sheet-letter-landscape {
   width: 279.4mm;
-  min-height: 215.9mm;
+  height: 215.9mm;
+  aspect-ratio: 279.4 / 215.9;
+  box-sizing: border-box;
 }
 
 /* Barras de desplazamiento sutiles y elegantes */
@@ -51,4 +59,3 @@ body {
   touch-action: none;
   cursor: crosshair;
 }
-

@@ -31,21 +31,9 @@ export function renderGalleryCards() {
     previewWrap.appendChild(canvas);
 
     // Badges flotantes en la miniatura
-    const isCropped = (item.crop.w < 0.99 || item.crop.h < 0.99 || item.crop.x > 0.01 || item.crop.y > 0.01);
-    let badgeHtml = '';
-    if (isCropped) {
-      badgeHtml += `<span class="bg-blue-500/80 backdrop-blur text-white text-[10px] font-semibold px-1.5 py-0.5 rounded shadow">Recortada</span>`;
-    }
-    if (item.rotation !== 0) {
-      badgeHtml += `<span class="bg-purple-500/80 backdrop-blur text-white text-[10px] font-semibold px-1.5 py-0.5 rounded shadow">${item.rotation}°</span>`;
-    }
-    if (item.inkSaver) {
-      badgeHtml += `<span class="bg-emerald-500/80 backdrop-blur text-white text-[10px] font-semibold px-1.5 py-0.5 rounded shadow">Eco-Tinta</span>`;
-    }
-
     const badgesContainer = document.createElement('div');
     badgesContainer.className = 'absolute top-2 left-2 flex flex-wrap gap-1 pointer-events-none';
-    badgesContainer.innerHTML = badgeHtml;
+    updateCardBadges(item, badgesContainer);
     previewWrap.appendChild(badgesContainer);
 
     // Botón rápido de eliminar en esquina
@@ -69,7 +57,7 @@ export function renderGalleryCards() {
           <span class="card-item-name truncate max-w-[140px]"></span>
         </div>
         
-        <!-- Controles Individuales de Brillo y Contraste -->
+        <!-- Controles Individuales de Brillo, Contraste y Blanqueado -->
         <div class="space-y-2 mt-2">
           <div class="flex items-center justify-between">
             <span class="text-slate-400">Aclarar:</span>
@@ -86,6 +74,11 @@ export function renderGalleryCards() {
               <span class="card-contrast-val font-mono text-emerald-400 w-8 text-right font-medium">${item.contrast > 0 ? '+' : ''}${item.contrast}%</span>
             </div>
           </div>
+
+          <label class="flex items-center justify-between pt-1 cursor-pointer select-none text-slate-300 hover:text-white transition">
+            <span class="text-slate-400">Blanquear fondo:</span>
+            <input type="checkbox" ${item.inkSaver ? 'checked' : ''} class="card-inksaver-input accent-emerald-500 rounded cursor-pointer">
+          </label>
         </div>
       </div>
 
@@ -138,6 +131,14 @@ export function renderGalleryCards() {
       renderProcessedImageToCanvas(item, canvas, 400);
     });
 
+    const inkSaverInput = body.querySelector('.card-inksaver-input');
+    inkSaverInput.addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      updateIndividualInkSaver(index, checked, false);
+      updateCardBadges(item, badgesContainer);
+      renderProcessedImageToCanvas(item, canvas, 400);
+    });
+
     const cropBtn = body.querySelector('.card-crop-btn');
     cropBtn.addEventListener('click', () => openCropModal(index));
 
@@ -154,6 +155,26 @@ export function renderGalleryCards() {
     card.appendChild(body);
     grid.appendChild(card);
   });
+}
+
+/**
+ * Actualiza las insignias visuales (Recortada, Rotación, Eco-Tinta) de una tarjeta
+ * @param {Object} item
+ * @param {HTMLElement} container
+ */
+function updateCardBadges(item, container) {
+  const isCropped = (item.crop.w < 0.99 || item.crop.h < 0.99 || item.crop.x > 0.01 || item.crop.y > 0.01);
+  let badgeHtml = '';
+  if (isCropped) {
+    badgeHtml += `<span class="bg-blue-500/80 backdrop-blur text-white text-[10px] font-semibold px-1.5 py-0.5 rounded shadow">Recortada</span>`;
+  }
+  if (item.rotation !== 0) {
+    badgeHtml += `<span class="bg-purple-500/80 backdrop-blur text-white text-[10px] font-semibold px-1.5 py-0.5 rounded shadow">${item.rotation}°</span>`;
+  }
+  if (item.inkSaver) {
+    badgeHtml += `<span class="bg-emerald-500/80 backdrop-blur text-white text-[10px] font-semibold px-1.5 py-0.5 rounded shadow">Eco-Tinta</span>`;
+  }
+  container.innerHTML = badgeHtml;
 }
 
 /**
@@ -174,6 +195,16 @@ export function updateIndividualBrightness(index, val, reRenderAll = true) {
  */
 export function updateIndividualContrast(index, val, reRenderAll = true) {
   updateImageProps(index, { contrast: parseInt(val, 10) }, reRenderAll);
+}
+
+/**
+ * Activa o desactiva el filtro de blanqueado de fondo (Eco-Tinta) en una imagen individual
+ * @param {number} index - Índice de la imagen
+ * @param {boolean} enabled - Estado del filtro
+ * @param {boolean} [reRenderAll=true] - Si debe reconstruir la cuadrícula completa
+ */
+export function updateIndividualInkSaver(index, enabled, reRenderAll = true) {
+  updateImageProps(index, { inkSaver: Boolean(enabled) }, reRenderAll);
 }
 
 /**

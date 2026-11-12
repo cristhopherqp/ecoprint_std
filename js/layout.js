@@ -7,11 +7,14 @@ import { renderProcessedImageToCanvas } from './processor.js';
 import { showToast } from './toast.js';
 
 /**
- * Calcula columnas, filas y cantidad por página según el diseño seleccionado
+ * Calcula columnas, filas y cantidad por página según el diseño y la orientación seleccionados
  * @returns {{ cols: number, rows: number, perPage: number }}
  */
 export function getGridSpecs() {
   const layout = document.getElementById('layoutSelect')?.value || '2v';
+  const orientation = document.getElementById('orientationSelect')?.value || 'portrait';
+  const isLandscape = orientation === 'landscape';
+
   let cols = 1;
   let rows = 1;
   let perPage = 1;
@@ -26,9 +29,15 @@ export function getGridSpecs() {
     case '4':
       cols = 2; rows = 2; perPage = 4; break;
     case '6':
-      cols = 2; rows = 3; perPage = 6; break;
+      cols = isLandscape ? 3 : 2;
+      rows = isLandscape ? 2 : 3;
+      perPage = 6;
+      break;
     case '8':
-      cols = 2; rows = 4; perPage = 8; break;
+      cols = isLandscape ? 4 : 2;
+      rows = isLandscape ? 2 : 4;
+      perPage = 8;
+      break;
     default:
       cols = 1; rows = 2; perPage = 2; break;
   }
@@ -36,16 +45,15 @@ export function getGridSpecs() {
 }
 
 /**
- * Inyecta dinámicamente la regla CSS @page según tamaño de papel, orientación y margen
+ * Inyecta dinámicamente la regla CSS @page según tamaño de papel y orientación.
+ * El margen seleccionado se aplica como padding interno de .print-sheet para coincidencia 1:1.
  */
 export function updatePrintStyles() {
   const paperSelect = document.getElementById('paperSizeSelect');
   const orientSelect = document.getElementById('orientationSelect');
-  const marginSelect = document.getElementById('marginSelect');
 
   const paperSize = paperSelect ? paperSelect.value : 'A4';
   const orientation = orientSelect ? orientSelect.value : 'portrait';
-  const margin = marginSelect ? marginSelect.value : '6mm';
 
   let styleTag = document.getElementById('dynamicPageRule');
   if (!styleTag) {
@@ -56,7 +64,7 @@ export function updatePrintStyles() {
   styleTag.innerHTML = `
     @page {
       size: ${paperSize} ${orientation};
-      margin: ${margin};
+      margin: 0mm;
     }
   `;
 }
@@ -86,7 +94,7 @@ export function renderPrintSheets() {
 
   if (images.length === 0) {
     printArea.innerHTML = `
-      <div class="text-center py-20 text-slate-500">
+      <div class="no-print text-center py-20 text-slate-500">
         <p class="text-base font-medium">No hay imágenes para maquetar</p>
         <p class="text-xs text-slate-600 mt-1">Carga imágenes en la pestaña "Galería & Edición"</p>
       </div>
@@ -95,7 +103,7 @@ export function renderPrintSheets() {
   }
 
   const { cols, rows, perPage } = getGridSpecs();
-  const paperSize = document.getElementById('paperSizeSelect')?.value || 'A4';
+  const paperSize = (document.getElementById('paperSizeSelect')?.value || 'A4').toLowerCase();
   const orientation = document.getElementById('orientationSelect')?.value || 'portrait';
   const margin = document.getElementById('marginSelect')?.value || '6mm';
   const fitMode = document.getElementById('fitSelect')?.value || 'contain';
@@ -106,18 +114,18 @@ export function renderPrintSheets() {
 
   for (let p = 0; p < totalPages; p++) {
     const sheet = document.createElement('div');
-    sheet.className = `print-sheet ${sheetCssClass} bg-white text-black shadow-2xl relative flex flex-col justify-between overflow-hidden`;
+    sheet.className = `print-sheet ${sheetCssClass} bg-white text-black shadow-2xl relative flex flex-col justify-between`;
     sheet.style.padding = margin;
 
     // Badge visual del número de hoja en pantalla (se oculta automáticamente en papel)
     const badge = document.createElement('div');
-    badge.className = "page-badge absolute -top-7 left-0 text-slate-400 text-xs font-mono font-medium flex items-center gap-1.5";
-    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Hoja ${p + 1} de ${totalPages}`;
+    badge.className = 'page-badge no-print absolute -top-7 left-0 text-slate-400 text-xs font-mono font-medium flex items-center gap-1.5';
+    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Hoja ${p + 1} de ${totalPages} (${paperSize.toUpperCase()} - ${orientation === 'portrait' ? 'Vertical' : 'Horizontal'})`;
     sheet.appendChild(badge);
 
-    // Cuadrícula interior de la hoja
+    // Cuadrícula interior de la hoja con restricción estricta de dimensiones
     const grid = document.createElement('div');
-    grid.className = "w-full h-full flex-1 grid gap-2";
+    grid.className = 'w-full h-full min-w-0 min-h-0 flex-1 grid gap-2 overflow-hidden';
     grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
     grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
 
@@ -128,12 +136,12 @@ export function renderPrintSheets() {
       const item = images[i];
 
       const slot = document.createElement('div');
-      slot.className = `w-full h-full relative flex items-center justify-center overflow-hidden ${
+      slot.className = `w-full h-full min-w-0 min-h-0 relative flex items-center justify-center overflow-hidden ${
         cutGuides ? 'border border-dashed border-slate-300' : ''
       }`;
 
       const canvas = document.createElement('canvas');
-      canvas.className = `w-full h-full ${
+      canvas.className = `block w-full h-full max-w-full max-h-full ${
         fitMode === 'contain' ? 'object-contain' : 'object-cover'
       }`;
 
@@ -147,9 +155,9 @@ export function renderPrintSheets() {
     const emptySlotsCount = perPage - (endIdx - startIdx);
     for (let k = 0; k < emptySlotsCount; k++) {
       const emptySlot = document.createElement('div');
-      if (cutGuides) {
-        emptySlot.className = "border border-dashed border-slate-200";
-      }
+      emptySlot.className = `w-full h-full min-w-0 min-h-0 ${
+        cutGuides ? 'border border-dashed border-slate-200' : ''
+      }`;
       grid.appendChild(emptySlot);
     }
 
@@ -168,7 +176,8 @@ export function triggerPrint() {
     return;
   }
 
-  // Asegura que las hojas estén calculadas y actualizadas
+  // Asegura que las reglas @page y las hojas estén calculadas y actualizadas
+  updatePrintStyles();
   renderPrintSheets();
 
   showToast('Preparando hojas para impresión...');
@@ -178,4 +187,3 @@ export function triggerPrint() {
     window.print();
   }, 300);
 }
-

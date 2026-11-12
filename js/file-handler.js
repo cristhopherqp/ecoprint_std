@@ -1,5 +1,5 @@
 /**
- * EcoPrint Studio - Manejo de Archivos, Drag & Drop y Portapapeles (Paste)
+ * EcoPrint Studio - Manejo de Archivos, Drag & Drop Global y Portapapeles (Paste)
  */
 
 import { addImages, getImages } from './state.js';
@@ -9,20 +9,33 @@ let dropZoneInitialized = false;
 let pasteSupportInitialized = false;
 
 /**
- * Configura la zona interactiva de arrastrar y soltar
+ * Configura la zona interactiva de arrastrar y soltar (tanto en el dropzone como a nivel global en window)
  */
 export function setupDropZone() {
   if (dropZoneInitialized) return;
   const dropZone = document.getElementById('dropZone');
+  const sideDropPanel = document.getElementById('sideDropPanel');
+  const addMoreFilesBtn = document.getElementById('addMoreFilesBtn');
   const fileInput = document.getElementById('fileInput');
 
-  if (!dropZone || !fileInput) return;
+  if (!fileInput) return;
 
-  dropZone.addEventListener('click', (e) => {
-    if (e.target.tagName !== 'BUTTON') {
-      fileInput.click();
-    }
-  });
+  // Clic en dropzone central (cuando está vacío)
+  if (dropZone) {
+    dropZone.addEventListener('click', (e) => {
+      if (e.target.tagName !== 'BUTTON') {
+        fileInput.click();
+      }
+    });
+  }
+
+  // Clic en panel lateral derecho o botón superior de añadir imágenes
+  if (sideDropPanel) {
+    sideDropPanel.addEventListener('click', () => fileInput.click());
+  }
+  if (addMoreFilesBtn) {
+    addMoreFilesBtn.addEventListener('click', () => fileInput.click());
+  }
 
   fileInput.addEventListener('change', (e) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -31,21 +44,50 @@ export function setupDropZone() {
     }
   });
 
-  ['dragenter', 'dragover'].forEach(name => {
-    dropZone.addEventListener(name, (e) => {
-      e.preventDefault();
-      dropZone.classList.add('border-emerald-500', 'bg-slate-800/80');
+  // Funciones auxiliares para resaltado visual de zonas de carga
+  const setDropHighlight = (active) => {
+    [dropZone, sideDropPanel].forEach((el) => {
+      if (!el) return;
+      el.classList.toggle('border-emerald-500', active);
+      el.classList.toggle('bg-slate-800/80', active);
     });
+  };
+
+  let dragCounter = 0;
+
+  // Prevención global en window para evitar que el navegador abra imágenes en una pestaña nueva
+  // y permitir soltar archivos en cualquier zona libre o lateral de la ventana
+  window.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter++;
+    setDropHighlight(true);
   });
 
-  ['dragleave', 'drop'].forEach(name => {
-    dropZone.addEventListener(name, (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('border-emerald-500', 'bg-slate-800/80');
-    });
+  window.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+    setDropHighlight(true);
   });
 
-  dropZone.addEventListener('drop', (e) => {
+  window.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter = Math.max(0, dragCounter - 1);
+    if (dragCounter === 0) {
+      setDropHighlight(false);
+    }
+  });
+
+  window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter = 0;
+    setDropHighlight(false);
+
     if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleIncomingFiles(e.dataTransfer.files);
     }
@@ -121,7 +163,7 @@ export async function handleIncomingFiles(fileList) {
         inkThreshold: 215,
       });
     } catch (err) {
-      console.error("Error al cargar imagen:", file.name, err);
+      console.error('Error al cargar imagen:', file.name, err);
     }
   }
 
@@ -149,4 +191,3 @@ export function loadImageFromFile(file) {
     reader.readAsDataURL(file);
   });
 }
-
