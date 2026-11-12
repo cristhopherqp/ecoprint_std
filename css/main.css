@@ -6,6 +6,51 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Quitar flechas direccionales (spin buttons) en inputs numéricos editables */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Garantizar margen/padding lateral mínimo de >=20px a ambos lados para arrastrar archivos cómodamente */
+.workspace-main {
+  padding-left: max(24px, 1.5rem);
+  padding-right: max(24px, 1.5rem);
+}
+
+/* Cuadrícula dinámica de galería controlada mediante variables CSS (align-items: start para ajustar altura sin vacíos) */
+#imageCardsGrid {
+  --card-min-width: 280px;
+  --card-preview-height: 192px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--card-min-width)), 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+#imageCardsGrid .card-preview-wrap {
+  height: var(--card-preview-height);
+  transition: height 0.15s ease;
+}
+
+/* Soporte de contenedor para tarjetas individuales (oculta texto de etiqueta en tamaños pequeños dejando ícono) */
+.card-item {
+  container-type: inline-size;
+  container-name: card;
+}
+
+@container card (max-width: 250px) {
+  .card-filter-text {
+    display: none;
+  }
+}
+
 /* Simulación visual exacta 1:1 de hojas de papel físicas en pantalla */
 .sheet-a4-portrait {
   width: 210mm;

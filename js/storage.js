@@ -45,12 +45,13 @@ function openDB() {
 }
 
 /**
- * Lee los controles actuales del DOM para persistir también la configuración de hoja y filtros
+ * Lee los controles actuales del DOM para persistir también la configuración de hoja, galería y filtros
  * @returns {Object}
  */
 function getControlsSnapshot() {
   return {
     layout: document.getElementById('layoutSelect')?.value || '2v',
+    customPerPage: document.getElementById('customPerPageInput')?.value || '9',
     paperSize: document.getElementById('paperSizeSelect')?.value || 'A4',
     orientation: document.getElementById('orientationSelect')?.value || 'portrait',
     margin: document.getElementById('marginSelect')?.value || '6mm',
@@ -59,6 +60,8 @@ function getControlsSnapshot() {
     globalBrightness: document.getElementById('globalBrightness')?.value || '30',
     globalContrast: document.getElementById('globalContrast')?.value || '10',
     globalInkSaver: document.getElementById('globalInkSaver')?.checked ?? true,
+    cardSize: document.getElementById('cardSizeRange')?.value || '280',
+    sortMode: document.getElementById('sortGallerySelect')?.value || 'upload-asc',
   };
 }
 
@@ -84,7 +87,7 @@ export function scheduleSaveSession(state, delay = 120) {
 export async function saveSessionNow(state) {
   const db = await openDB();
 
-  const serializedImages = state.images.map((item) => ({
+  const serializedImages = state.images.map((item, idx) => ({
     id: item.id,
     name: item.name,
     src: item.imgElement?.src || '',
@@ -96,6 +99,9 @@ export async function saveSessionNow(state) {
     contrast: item.contrast,
     inkSaver: Boolean(item.inkSaver),
     inkThreshold: item.inkThreshold ?? 215,
+    uploadOrder: item.uploadOrder ?? (idx + 1),
+    uploadedAt: item.uploadedAt ?? Date.now(),
+    controlsOpen: item.controlsOpen !== undefined ? Boolean(item.controlsOpen) : true,
   }));
 
   const payload = {
@@ -147,7 +153,8 @@ export async function restoreSessionFromDB() {
 
     const hydratedImages = [];
     if (Array.isArray(saved.images)) {
-      for (const raw of saved.images) {
+      for (let i = 0; i < saved.images.length; i++) {
+        const raw = saved.images[i];
         if (!raw || !raw.src) continue;
         try {
           const imgElement = await hydrateImageElement(raw.src);
@@ -163,6 +170,9 @@ export async function restoreSessionFromDB() {
             contrast: raw.contrast ?? 10,
             inkSaver: raw.inkSaver ?? true,
             inkThreshold: raw.inkThreshold ?? 215,
+            uploadOrder: raw.uploadOrder ?? (i + 1),
+            uploadedAt: raw.uploadedAt ?? Date.now(),
+            controlsOpen: raw.controlsOpen !== undefined ? Boolean(raw.controlsOpen) : true,
           });
         } catch (imgErr) {
           console.warn('Error al restaurar imagen desde IndexedDB:', raw.name, imgErr);
@@ -180,4 +190,3 @@ export async function restoreSessionFromDB() {
     return null;
   }
 }
-

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EcoPrint Studio</title>
+  <title>EcoPrint Studio - Ahorro de Tinta y Maquetación de Imágenes</title>
   
   <!-- Tailwind CSS & Fuentes de Google -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -31,7 +31,7 @@
           <h1 class="text-lg font-bold tracking-tight text-white">EcoPrint Studio</h1>
           <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Ahorro de Tinta</span>
         </div>
-        <p class="text-xs text-slate-400">Gestiona tus imagenes</p>
+        <p class="text-xs text-slate-400">Aclara, recorta, maqueta e imprime lotes sin PowerPoint ni PDF24</p>
       </div>
     </div>
 
@@ -58,27 +58,58 @@
 
   <!-- ==================== BARRA DE CONTROL GLOBAL Y MAQUETACIÓN ==================== -->
   <section class="no-print bg-slate-950 border-b border-slate-800 px-4 py-3 shadow-inner" aria-label="Controles globales y maquetación">
-    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between text-xs">
+    <div class="max-w-7xl mx-auto flex flex-col xl:flex-row gap-3 items-stretch xl:items-center justify-between text-xs">
       
-      <!-- Controles Globales de Tinta y Filtros -->
-      <div class="flex flex-wrap items-center gap-3 bg-slate-900/90 border border-slate-800/80 p-2.5 rounded-xl">
+      <!-- Controles Globales de Tinta y Filtros (Compuestos: Slider + Número + Presets) -->
+      <div class="flex flex-wrap items-center gap-2.5 bg-slate-900/90 border border-slate-800/80 p-2.5 rounded-xl">
         <span class="font-semibold text-slate-300 flex items-center gap-1.5">
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
           Ajustes en Grupo:
         </span>
 
-        <!-- Deslizador de Brillo Global -->
-        <div class="flex items-center gap-2 bg-slate-800/60 px-2.5 py-1.5 rounded-lg border border-slate-700/50">
-          <label for="globalBrightness" class="text-slate-400">Aclarar:</label>
-          <input type="range" id="globalBrightness" min="0" max="90" value="30" class="w-20 accent-emerald-500 cursor-pointer">
-          <span id="globalBrightnessVal" class="text-emerald-400 font-mono font-medium w-8 text-right">+30%</span>
+        <!-- Control Compuesto de Brillo Global (Aclarar) -->
+        <div class="flex flex-wrap items-center gap-1.5 bg-slate-800/60 px-2.5 py-1.5 rounded-lg border border-slate-700/50">
+          <label for="globalBrightness" class="text-slate-400 font-medium">Aclarar:</label>
+          <input type="range" id="globalBrightness" min="0" max="90" value="30" class="w-16 accent-emerald-500 cursor-pointer">
+          <div class="flex items-center bg-slate-900 border border-slate-700 rounded px-1 py-0.5">
+            <input type="number" id="globalBrightnessNum" min="0" max="90" value="30" aria-label="Porcentaje de aclarado global" class="w-9 bg-transparent text-emerald-400 font-mono text-right focus:outline-none">
+            <span class="text-slate-500 font-mono">%</span>
+          </div>
+          <select id="globalBrightnessPreset" aria-label="Presets de aclarado global" class="bg-slate-900 border border-slate-700 text-slate-300 rounded px-1.5 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer">
+            <option value="custom" hidden>Personalizado</option>
+            <option value="0">Preset 0%</option>
+            <option value="10">Preset +10%</option>
+            <option value="20">Preset +20%</option>
+            <option value="30" selected>Preset +30%</option>
+            <option value="40">Preset +40%</option>
+            <option value="50">Preset +50%</option>
+            <option value="60">Preset +60%</option>
+            <option value="70">Preset +70%</option>
+            <option value="80">Preset +80%</option>
+            <option value="90">Preset +90%</option>
+          </select>
         </div>
 
-        <!-- Deslizador de Contraste Global -->
-        <div class="flex items-center gap-2 bg-slate-800/60 px-2.5 py-1.5 rounded-lg border border-slate-700/50">
-          <label for="globalContrast" class="text-slate-400">Contraste:</label>
-          <input type="range" id="globalContrast" min="-20" max="60" value="10" class="w-20 accent-emerald-500 cursor-pointer">
-          <span id="globalContrastVal" class="text-emerald-400 font-mono font-medium w-8 text-right">+10%</span>
+        <!-- Control Compuesto de Contraste Global -->
+        <div class="flex flex-wrap items-center gap-1.5 bg-slate-800/60 px-2.5 py-1.5 rounded-lg border border-slate-700/50">
+          <label for="globalContrast" class="text-slate-400 font-medium">Contraste:</label>
+          <input type="range" id="globalContrast" min="-20" max="60" value="10" class="w-16 accent-emerald-500 cursor-pointer">
+          <div class="flex items-center bg-slate-900 border border-slate-700 rounded px-1 py-0.5">
+            <input type="number" id="globalContrastNum" min="-20" max="60" value="10" aria-label="Porcentaje de contraste global" class="w-10 bg-transparent text-emerald-400 font-mono text-right focus:outline-none">
+            <span class="text-slate-500 font-mono">%</span>
+          </div>
+          <select id="globalContrastPreset" aria-label="Presets de contraste global" class="bg-slate-900 border border-slate-700 text-slate-300 rounded px-1.5 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer">
+            <option value="custom" hidden>Personalizado</option>
+            <option value="-20">Preset -20%</option>
+            <option value="-10">Preset -10%</option>
+            <option value="0">Preset 0%</option>
+            <option value="10" selected>Preset +10%</option>
+            <option value="20">Preset +20%</option>
+            <option value="30">Preset +30%</option>
+            <option value="40">Preset +40%</option>
+            <option value="50">Preset +50%</option>
+            <option value="60">Preset +60%</option>
+          </select>
         </div>
 
         <!-- Modo Blanqueado de Fondo (Filtro Ahorro Tinta) -->
@@ -96,13 +127,13 @@
       </div>
 
       <!-- Configuración de Maquetación de Página -->
-      <div class="flex flex-wrap items-center gap-2.5 bg-slate-900/90 border border-slate-800/80 p-2.5 rounded-xl">
+      <div class="flex flex-wrap items-center gap-2 bg-slate-900/90 border border-slate-800/80 p-2.5 rounded-xl">
         <span class="font-semibold text-slate-300 flex items-center gap-1.5">
           <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
           Hoja:
         </span>
 
-        <!-- Selector de Imágenes por Hoja -->
+        <!-- Selector de Imágenes por Hoja (Incluye Personalizado N por hoja) -->
         <select id="layoutSelect" aria-label="Imágenes por hoja" class="bg-slate-800 border border-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer">
           <option value="1">1 por hoja (1x1)</option>
           <option value="2v" selected>2 por hoja (Vertical)</option>
@@ -110,7 +141,15 @@
           <option value="4">4 por hoja (2x2)</option>
           <option value="6">6 por hoja (2x3)</option>
           <option value="8">8 por hoja (2x4)</option>
+          <option value="custom">Personalizado (N por hoja)</option>
         </select>
+
+        <!-- Input numérico para cantidad personalizada de imágenes por hoja -->
+        <div id="customLayoutWrap" class="hidden flex items-center gap-1.5 bg-slate-800 border border-emerald-500/40 px-2 py-1 rounded-lg">
+          <label for="customPerPageInput" class="text-slate-300">Cant:</label>
+          <input type="number" id="customPerPageInput" min="1" max="64" value="9" aria-label="Cantidad personalizada de imágenes por hoja" class="w-12 bg-slate-900 border border-slate-700 text-emerald-400 font-mono font-semibold text-center rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          <span class="text-slate-400 text-[11px]">/hoja</span>
+        </div>
 
         <!-- Selector de Tamaño de Papel -->
         <select id="paperSizeSelect" aria-label="Tamaño de papel" class="bg-slate-800 border border-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer">
@@ -148,27 +187,11 @@
     </div>
   </section>
 
-  <!-- ==================== CONTENEDOR PRINCIPAL ==================== -->
-  <main class="flex-1 p-4 lg:p-6 max-w-7xl mx-auto w-full">
-
-    <!-- Panel Lateral Derecho de Instrucciones y Zona de Soltado Adicional -->
-    <aside id="sideDropPanel" class="w-full lg:w-64 shrink-0 bg-slate-900/80 border-2 border-dashed border-slate-800 hover:border-emerald-500/60 rounded-xl p-4 text-xs text-slate-400 transition cursor-pointer lg:sticky lg:top-20">
-      <div class="flex items-center gap-2 text-emerald-400 font-semibold mb-2">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-        <span>Carga Rápida Activa</span>
-      </div>
-      <p class="text-slate-300 font-medium leading-relaxed mb-2">
-        Arrastra y suelta más imágenes aquí o en <span class="text-emerald-400">cualquier zona libre</span> de la pantalla.
-      </p>
-      <ul class="space-y-1.5 text-[11px] text-slate-400 border-t border-slate-800 pt-2.5">
-        <li>• Haz clic en este panel para explorar archivos locales (JPG, PNG, WebP).</li>
-        <li>• Usa <kbd class="px-1 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono">Ctrl + V</kbd> para pegar capturas del portapapeles al instante.</li>
-        <li>• Ajusta cada imagen individualmente o aplica filtros en lote arriba.</li>
-      </ul>
-    </aside>
+  <!-- ==================== CONTENEDOR PRINCIPAL (Con padding lateral >=24px para Drag & Drop) ==================== -->
+  <main class="workspace-main flex-1 py-4 lg:py-6 max-w-7xl mx-auto w-full">
 
     <!-- ZONA DRAG & DROP Y ACCIONES RÁPIDAS (Visible en Galería) -->
-    <div id="uploadContainer" class="no-print mb-5">
+    <div id="uploadContainer" class="no-print mb-5 space-y-2.5">
       <input type="file" id="fileInput" multiple accept="image/png,image/jpeg,image/webp,image/bmp" class="hidden">
 
       <!-- Estado Vacío: Dropzone Central Amplio -->
@@ -189,17 +212,60 @@
         </div>
       </div>
 
+      <!-- Texto de instrucciones situado encima de la barra superior cuando hay imágenes cargadas -->
+      <div id="uploadInstructionsBanner" class="hidden bg-slate-900/60 border border-dashed border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-300 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          <span><strong class="text-emerald-400">Carga Rápida Activa:</strong> Arrastra y suelta más imágenes en <span class="text-emerald-300">cualquier zona libre o margen lateral</span> de la pantalla, o pega con <kbd class="px-1 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono text-[11px]">Ctrl + V</kbd>.</span>
+        </div>
+        <span class="text-[11px] text-slate-500">Doble clic en el nombre para renombrar • Clic en expandir para pantalla completa</span>
+      </div>
+
       <!-- Estado con Imágenes: Barra Superior Compacta de Acciones -->
       <div id="compactUploadToolbar" class="hidden bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow">
+        <!-- Izquierda: Botón de añadir imágenes (y botón de muestras oculto según requerimiento) -->
         <div class="flex items-center gap-2">
           <button type="button" id="addMoreFilesBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Añadir imágenes
           </button>
-          <button type="button" id="loadSampleCompactBtn" class="text-slate-300 hover:text-emerald-400 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition">
+          <button type="button" id="loadSampleCompactBtn" class="hidden text-slate-300 hover:text-emerald-400 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition">
             ⚡ Añadir muestras
           </button>
         </div>
+
+        <!-- Centro (entre addMoreFilesBtn y clearAllBtn): Controles de tamaño de tarjetas, ordenamiento y plegado -->
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Control de tamaño de tarjetas en #imageCardsGrid -->
+          <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700/70 px-2.5 py-1 rounded-lg">
+            <label for="cardSizeSelect" class="text-slate-400 font-medium">Tamaño:</label>
+            <select id="cardSizeSelect" aria-label="Tamaño de tarjetas en galería" class="bg-slate-900 border border-slate-700 text-slate-200 rounded px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer">
+              <option value="165">Pequeño (6 por fila)</option>
+              <option value="300" selected>Mediano (3-4 por fila)</option>
+              <option value="850">Grande (1 por fila)</option>
+              <option value="custom" hidden>Personalizado</option>
+            </select>
+            <input type="range" id="cardSizeRange" min="160" max="850" value="300" aria-label="Ajuste continuo de tamaño de tarjeta" class="w-20 accent-emerald-500 cursor-pointer">
+          </div>
+
+          <!-- Control de ordenamiento de la galería -->
+          <div class="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/70 px-2.5 py-1 rounded-lg">
+            <label for="sortGallerySelect" class="text-slate-400 font-medium">Ordenar:</label>
+            <select id="sortGallerySelect" aria-label="Ordenar imágenes de la galería" class="bg-slate-900 border border-slate-700 text-slate-200 rounded px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer">
+              <option value="upload-asc">Subida (1 → N)</option>
+              <option value="upload-desc">Subida (N → 1)</option>
+              <option value="name-asc">Nombre (A → Z)</option>
+              <option value="name-desc">Nombre (Z → A)</option>
+            </select>
+          </div>
+
+          <!-- Botón para plegar/desplegar opciones de edición individuales -->
+          <button type="button" id="toggleAllCardsCollapseBtn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
+            <span>Plegar ajustes</span>
+          </button>
+        </div>
+
+        <!-- Derecha: Botón eliminar todas -->
         <div class="flex items-center gap-2">
           <button type="button" id="clearAllBtn" class="text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/50 border border-rose-800/40 px-3 py-1.5 rounded-lg transition">
             🗑️ Eliminar todas
@@ -216,12 +282,15 @@
         <p class="text-xs text-slate-500 mt-1">Carga varias imágenes de golpe para recortarlas, aclararlas y organizarlas para imprimir.</p>
       </div>
 
-      <!-- Layout con Cuadrícula Principal y Panel Lateral Derecho de Instrucciones / Subida -->
+      <!-- Layout con Cuadrícula Principal (sideDropPanel permanece oculto según requerimiento) -->
       <div id="galleryContentLayout" class="hidden flex flex-col lg:flex-row gap-5 items-start">
-        <!-- Cuadrícula de Tarjetas de Imágenes -->
-        <div id="imageCardsGrid" class="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <!-- Cuadrícula de Tarjetas de Imágenes controlada por variables CSS -->
+        <div id="imageCardsGrid" class="flex-1 w-full">
           <!-- Renderizado dinámico vía JavaScript modular -->
         </div>
+
+        <!-- Panel Lateral Derecho Oculto -->
+        <aside id="sideDropPanel" class="hidden"></aside>
       </div>
     </section>
 
@@ -250,6 +319,26 @@
     </section>
 
   </main>
+
+  <!-- ==================== MODAL DE PANTALLA COMPLETA (LIGHTBOX) ==================== -->
+  <div id="lightboxModal" role="dialog" aria-modal="true" aria-labelledby="lightboxTitle" class="no-print fixed inset-0 z-50 bg-black/90 backdrop-blur-sm hidden flex flex-col items-center justify-between p-4 sm:p-6">
+    <div class="w-full max-w-6xl flex items-center justify-between bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-2.5 text-xs">
+      <div class="flex items-center gap-3 min-w-0">
+        <span id="lightboxIndexBadge" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono font-semibold">#1</span>
+        <h3 id="lightboxTitle" class="text-sm font-semibold text-white truncate">Vista previa de imagen</h3>
+        <span id="lightboxMeta" class="text-slate-400 font-mono hidden sm:inline"></span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" id="lightboxPrevBtn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition" title="Imagen anterior">← Anterior</button>
+        <button type="button" id="lightboxNextBtn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition" title="Imagen siguiente">Siguiente →</button>
+        <button type="button" id="closeLightboxBtn" class="px-3 py-1 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white font-medium transition">✕ Cerrar (Esc)</button>
+      </div>
+    </div>
+
+    <div id="lightboxBackdropArea" class="flex-1 w-full flex items-center justify-center overflow-hidden my-3">
+      <canvas id="lightboxCanvas" class="max-w-full max-h-[82vh] object-contain rounded-lg shadow-2xl border border-slate-800 bg-white"></canvas>
+    </div>
+  </div>
 
   <!-- ==================== MODAL DE RECORTE INTERACTIVO ==================== -->
   <div id="cropModal" role="dialog" aria-modal="true" aria-labelledby="cropModalTitle" class="no-print fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-6">

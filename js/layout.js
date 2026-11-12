@@ -7,13 +7,19 @@ import { renderProcessedImageToCanvas } from './processor.js';
 import { showToast } from './toast.js';
 
 /**
- * Calcula columnas, filas y cantidad por página según el diseño y la orientación seleccionados
+ * Calcula columnas, filas y cantidad por página según el diseño y la orientación seleccionados.
+ * Soporta tanto presets estándar (1, 2v, 2h, 4, 6, 8) como una cantidad personalizada N por hoja.
  * @returns {{ cols: number, rows: number, perPage: number }}
  */
 export function getGridSpecs() {
   const layout = document.getElementById('layoutSelect')?.value || '2v';
   const orientation = document.getElementById('orientationSelect')?.value || 'portrait';
   const isLandscape = orientation === 'landscape';
+
+  const customWrap = document.getElementById('customLayoutWrap');
+  if (customWrap) {
+    customWrap.classList.toggle('hidden', layout !== 'custom');
+  }
 
   let cols = 1;
   let rows = 1;
@@ -38,6 +44,15 @@ export function getGridSpecs() {
       rows = isLandscape ? 2 : 4;
       perPage = 8;
       break;
+    case 'custom': {
+      const rawCustom = parseInt(document.getElementById('customPerPageInput')?.value || '9', 10);
+      perPage = Math.max(1, Math.min(64, Number.isFinite(rawCustom) ? rawCustom : 9));
+      const sideA = Math.ceil(Math.sqrt(perPage));
+      const sideB = Math.ceil(perPage / sideA);
+      cols = isLandscape ? Math.max(sideA, sideB) : Math.min(sideA, sideB);
+      rows = isLandscape ? Math.min(sideA, sideB) : Math.max(sideA, sideB);
+      break;
+    }
     default:
       cols = 1; rows = 2; perPage = 2; break;
   }
@@ -120,7 +135,7 @@ export function renderPrintSheets() {
     // Badge visual del número de hoja en pantalla (se oculta automáticamente en papel)
     const badge = document.createElement('div');
     badge.className = 'page-badge no-print absolute -top-7 left-0 text-slate-400 text-xs font-mono font-medium flex items-center gap-1.5';
-    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Hoja ${p + 1} de ${totalPages} (${paperSize.toUpperCase()} - ${orientation === 'portrait' ? 'Vertical' : 'Horizontal'})`;
+    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Hoja ${p + 1} de ${totalPages} (${paperSize.toUpperCase()} - ${orientation === 'portrait' ? 'Vertical' : 'Horizontal'} • ${cols}×${rows})`;
     sheet.appendChild(badge);
 
     // Cuadrícula interior de la hoja con restricción estricta de dimensiones
